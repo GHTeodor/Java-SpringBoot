@@ -11,3 +11,9 @@ public class JavaSpringBootApplication {
         SpringApplication.run(JavaSpringBootApplication.class, args);
     }
 }
+// User
+//    id
+//    name
+//    Passport (1:1 unidirectional)
+//    Card [] (1:n)
+// Реалізувати базові crud операції (занйти, знайти по ід, видалити,оновити) для кожної стутності (User, Passport, Card)
