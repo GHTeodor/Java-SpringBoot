@@ -1,6 +1,7 @@
 package com.springboot.javaspringboot.controllers;
 
 import com.springboot.javaspringboot.dao.UserDAO;
+import com.springboot.javaspringboot.dto.UserDTO;
 import com.springboot.javaspringboot.models.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -21,15 +22,21 @@ public class MainController {
 
     @PostMapping("")
     @ResponseStatus(HttpStatus.OK)
-    public void saveUser(@RequestBody User user) {
+    public List<UserDTO> saveUser(@RequestBody User user) {
         userDAO.save(user);
+        return userDAO.findAll().stream().map(UserDTO::new).collect(Collectors.toList());
     }
 
     @GetMapping("")
-    public ResponseEntity<List<User>> getUsers() {
-        List<User> users = userDAO.findAll();
-        return new ResponseEntity<>(users, HttpStatus.OK);
+    public ResponseEntity<List<UserDTO>> getUsers() {
+        List<User> all = userDAO.findAll();
+        List<UserDTO> userDTOs = all.stream().map(UserDTO::new).collect(Collectors.toList());
+        return new ResponseEntity<>(userDTOs, HttpStatus.OK);
     }
+//    public ResponseEntity<List<User>> getUsers() {
+//        List<User> users = userDAO.findAll();
+//        return new ResponseEntity<>(users, HttpStatus.OK);
+//    }
 
     @GetMapping("/{id}")
     public ResponseEntity<User> getUserById(@PathVariable int id) {

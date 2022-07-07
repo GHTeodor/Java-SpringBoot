@@ -20,5 +20,5 @@ public class User {
     private Passport passport;
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JoinColumn(name = "card_id")
-    private List<Card> cards = new ArrayList<>();
+    private List<Card> cards;
 }
