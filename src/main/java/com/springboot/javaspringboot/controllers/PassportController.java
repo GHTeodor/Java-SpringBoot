@@ -2,6 +2,7 @@ package com.springboot.javaspringboot.controllers;
 
 import com.springboot.javaspringboot.dao.PassportDAO;
 import com.springboot.javaspringboot.models.Passport;
+import com.springboot.javaspringboot.services.PassportService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,31 +14,31 @@ import java.util.List;
 @RequestMapping(value = "/passports")
 public class PassportController {
     @Autowired
-    private PassportDAO passportDAO;
+    private PassportService passportService;
 
     @PostMapping("")
     public ResponseEntity<Passport> savePassport(@RequestBody Passport passport) {
-        return new ResponseEntity<>(passportDAO.save(passport), HttpStatus.CREATED);
+        return new ResponseEntity<>(passportService.savePassport(passport), HttpStatus.CREATED);
     }
 
     @GetMapping("")
     public ResponseEntity<List<Passport>> getAll() {
-        return new ResponseEntity<>(passportDAO.findAll(), HttpStatus.OK);
+        return new ResponseEntity<>(passportService.getAll(), HttpStatus.OK);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Passport> getOneById(@PathVariable int id) {
-        return new ResponseEntity<>(passportDAO.findById(id).get(), HttpStatus.OK);
+        return new ResponseEntity<>(passportService.getOneById(id), HttpStatus.OK);
     }
 
     @PatchMapping("")
     public ResponseEntity<Passport> update(@RequestBody Passport passport) {
-        return new ResponseEntity<>(passportDAO.save(passport), HttpStatus.ACCEPTED);
+        return new ResponseEntity<>(passportService.update(passport), HttpStatus.ACCEPTED);
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
     public void deleteOneById(@PathVariable int id) {
-        passportDAO.deleteById(id);
+        passportService.getOneById(id);
     }
 }
