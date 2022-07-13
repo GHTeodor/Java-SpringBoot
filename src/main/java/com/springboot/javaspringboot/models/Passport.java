@@ -15,8 +15,14 @@ public class Passport {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
-    private boolean biometric;
+    private String series;
     @OneToOne(mappedBy = "passport", cascade = CascadeType.ALL)
     @JsonIgnore()
     private User user;
+    private String photo; // name of file
+
+    public Passport(String series, String photo) {
+        this.series = series;
+        this.photo = photo;
+    }
 }

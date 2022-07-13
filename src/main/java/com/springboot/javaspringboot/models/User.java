@@ -26,4 +26,7 @@ public class User {
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JoinColumn(name = "card_id")
     private List<Card> cards;
+
+    private boolean isActivated = false;
+    private String email;
 }

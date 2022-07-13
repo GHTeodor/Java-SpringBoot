@@ -7,7 +7,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -19,6 +21,11 @@ public class PassportController {
     @PostMapping("")
     public ResponseEntity<Passport> savePassport(@RequestBody Passport passport) {
         return new ResponseEntity<>(passportService.savePassport(passport), HttpStatus.CREATED);
+    }
+
+    @PostMapping("/photo")
+    public ResponseEntity<Passport> savePassportWithPhoto(@RequestParam String series, @RequestParam MultipartFile file) throws IOException {
+        return new ResponseEntity<>(passportService.savePassportWithPhoto(series, file), HttpStatus.CREATED);
     }
 
     @GetMapping("")

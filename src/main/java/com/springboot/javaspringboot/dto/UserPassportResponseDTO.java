@@ -10,10 +10,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class UserPassportResponseDTO {
     private String username;
-    private boolean passportStatus;
+    private String passportStatus;
 
     public UserPassportResponseDTO(User user) {
         this.username = user.getName();
-        this.passportStatus = user.getPassport().isBiometric();
+        this.passportStatus = user.getPassport().getSeries();
     }
 }

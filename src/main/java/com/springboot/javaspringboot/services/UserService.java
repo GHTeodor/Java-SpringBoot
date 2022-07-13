@@ -18,9 +18,13 @@ import java.util.stream.Collectors;
 public class UserService {
     private UserDAO userDAO;
     private PassportDAO passportDAO;
+    private MailService mailService;
 
     public List<UserDTO> saveOne(User user) {
-        if (user.getName() != null) userDAO.save(user);
+        if (user.getName() != null){
+            userDAO.save(user);
+            mailService.sendEmail(user);
+        }
         return userDAO.findAll().stream().map(UserDTO::new).collect(Collectors.toList());
     }
 
@@ -51,5 +55,12 @@ public class UserService {
 
     public void deleteOneById(int id) {
         userDAO.deleteById(id);
+    }
+
+    public String activateAccount(int id) {
+        User user = getOneById(id);
+        user.setActivated(true);
+        userDAO.save(user);
+        return "Account activated";
     }
 }

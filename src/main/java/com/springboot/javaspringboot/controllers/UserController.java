@@ -57,4 +57,9 @@ public class UserController {
     public void deleteOneById(@PathVariable int id) {
         userService.deleteOneById(id);
     }
+
+    @GetMapping("/activateAccount/{id}")
+    public ResponseEntity<String> activateAccount(@PathVariable int id) {
+        return new ResponseEntity<>(userService.activateAccount(id), HttpStatus.OK);
+    }
 }

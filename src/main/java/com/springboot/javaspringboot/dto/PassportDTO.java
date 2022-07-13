@@ -5,9 +5,9 @@ import lombok.Data;
 
 @Data
 public class PassportDTO {
-    private boolean biometric;
+    private String series;
 
     public PassportDTO(Passport passport) {
-        this.biometric = passport.isBiometric();
+        this.series = passport.getSeries();
     }
 }
