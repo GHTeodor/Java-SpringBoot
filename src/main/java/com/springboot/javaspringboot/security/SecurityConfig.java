@@ -1,5 +1,7 @@
 package com.springboot.javaspringboot.security;
 
+import com.springboot.javaspringboot.dao.CustomerDAO;
+import com.springboot.javaspringboot.models.Customer;
 import lombok.AllArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -8,30 +10,56 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 
-import javax.servlet.*;
-import javax.servlet.http.HttpServletRequest;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.util.Base64;
+import java.util.stream.Collectors;
 
 @Configuration
 @EnableWebMvc
 @AllArgsConstructor
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
+    private CustomerDAO customerDAO;
 
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
     @Override
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-        auth.inMemoryAuthentication()
-                .withUser("admin").password("{noop}admin").roles("ADMIN")
-                .and()
-                .withUser("manager").password("{noop}manager").roles("MANAGER");
+        auth.userDetailsService(new UserDetailsService() {
+            @Override
+            public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+                System.out.println(username);
+
+                Customer customer = customerDAO.findByLogin(username);
+                User user = new User(
+                        customer.getLogin(),
+                        customer.getPassword(),
+                        customer.getRoles()
+                                .stream()
+                                .map(role -> new SimpleGrantedAuthority(role.name())).collect(Collectors.toList())
+                        );
+                return user;
+            }
+        });
+
+//        auth.userDetailsService(username -> {
+//            Customer customer = customerDAO.findByLogin(username);
+//            String password = customer.getPassword();
+//            List<Authority> roles = customer.getRoles();
+//            return new User(username, password, roles);
+//        });
     }
 
     @Override
@@ -41,8 +69,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers(HttpMethod.GET, "/").permitAll()
 //                .antMatchers(HttpMethod.POST, "/").authenticated()
                 .antMatchers(HttpMethod.POST, "/").hasRole("ADMIN")
-                .antMatchers(HttpMethod.POST, "/users").hasAnyRole("ADMIN", "MANAGER")
-                .antMatchers("/users").permitAll()
+                .antMatchers(HttpMethod.POST, "/customers").permitAll()
+                .antMatchers("/customers").hasAnyRole("ADMIN", "MANAGER", "USER")
                 .and()
 
                 .httpBasic().and()
