@@ -2,95 +2,74 @@ package com.springboot.javaspringboot.security;
 
 import com.springboot.javaspringboot.dao.CustomerDAO;
 import com.springboot.javaspringboot.models.Customer;
+import com.springboot.javaspringboot.security.filters.CustomFilter;
 import lombok.AllArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 
 import java.util.Arrays;
-import java.util.stream.Collectors;
+import java.util.List;
 
 @Configuration
 @EnableWebMvc
 @AllArgsConstructor
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
     private CustomerDAO customerDAO;
-    private UserDetailsService userDetailsService;
+
+    @Override
+    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+        auth.userDetailsService(username -> {
+            Customer customer = customerDAO.findByLogin(username);
+            List<SimpleGrantedAuthority> authorities = Arrays.asList(new SimpleGrantedAuthority(customer.getRole()));
+            return new User(username, customer.getPassword(), authorities);
+        });
+    }
 
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
-    @Override
-    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-        auth.userDetailsService(userDetailsService);
 
-//        auth.userDetailsService(username -> {
-//            Customer customer = customerDAO.findByLogin(username);
-//            String password = customer.getPassword();
-//            List<Authority> roles = customer.getRoles();
-//            return new User(username, password, roles);
-//        });
+    @Bean
+    protected AuthenticationManager authenticationManager() throws Exception {
+        return super.authenticationManager();
+    }
+
+    public CustomFilter customFilter() {
+        return new CustomFilter(customerDAO);
     }
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        http.csrf().disable()
-                .authorizeHttpRequests()
-                .antMatchers(HttpMethod.GET, "/").permitAll()
-//                .antMatchers(HttpMethod.POST, "/").authenticated()
-                .antMatchers(HttpMethod.POST, "/").hasRole("ADMIN")
-                .antMatchers(HttpMethod.POST, "/customers").permitAll()
-                .antMatchers("/customers").hasAnyRole("ADMIN", "MANAGER", "USER")
-                .and()
+        http = http.csrf().disable();
 
-                .httpBasic().and()
+        http = http.cors().configurationSource(corsConfigurationSource()).and();
 
-                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
+        http = http.authorizeHttpRequests()
+                .antMatchers("/", "/open").permitAll()
+                .antMatchers(HttpMethod.POST, "/save").permitAll()
+                .antMatchers(HttpMethod.POST, "login").permitAll()
+                .antMatchers(HttpMethod.GET, "/secure").hasAnyRole("ADMIN", "USER")
+                .and();
 
-                .cors().configurationSource(corsConfigurationSource()).and();
+        http = http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and();
 
-//                .addFilterBefore((servletRequest, servletResponse, filterChain) -> {
-//                    HttpServletRequest httpRequest = (HttpServletRequest) servletRequest;
-//
-//                    final String authorization = httpRequest.getHeader("Authorization");
-//
-//                    System.out.println(authorization);
-//
-//                    // Authorization: Basic base64credentials
-//                    String base64Credentials = authorization.substring("Basic".length()).trim();
-//                    byte[] credDecoder = Base64.getDecoder().decode(base64Credentials);
-//                    String credentials = new String(credDecoder, StandardCharsets.UTF_8);
-//                    // credentials = username:password
-//                    final String[] values = credentials.split(":", 2);
-//                    System.out.println(Arrays.toString(values));
-//
-//                    filterChain.doFilter(servletRequest, servletResponse);
-//                }, UsernamePasswordAuthenticationFilter.class);
-
-//                .addFilterBefore(new Filter() {
-//                    @Override
-//                    public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
-//                        System.out.println("===Filter works===");
-//
-//                        filterChain.doFilter(servletRequest, servletResponse);
-//                    }
-//                }, UsernamePasswordAuthenticationFilter.class);
+        http = http.addFilterBefore(customFilter(), UsernamePasswordAuthenticationFilter.class);
     }
 
     @Bean
@@ -101,14 +80,12 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         configuration.setAllowedMethods(Arrays.asList(
                 HttpMethod.GET.name(),
                 HttpMethod.HEAD.name(),
-                HttpMethod.PATCH.name(),
                 HttpMethod.POST.name(),
                 HttpMethod.PUT.name(),
                 HttpMethod.DELETE.name()));
         configuration.addExposedHeader("Authorization");
-
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**",configuration);
+        source.registerCorsConfiguration("/**", configuration);
         return source;
     }
 }
