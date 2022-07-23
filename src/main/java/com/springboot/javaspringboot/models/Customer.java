@@ -24,7 +24,7 @@ public class Customer implements UserDetails {
     @Column(unique = true)
     private String login; // username
     private String password; // password
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER)
     @Enumerated(EnumType.STRING)
     private List<ROLE> roles = Arrays.asList(ROLE.ROLE_USER);
 
